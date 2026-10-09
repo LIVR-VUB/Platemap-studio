@@ -10,6 +10,34 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/LIVR-VUB/Platemap-studio/actions/workflows/release.yml"><img src="https://github.com/LIVR-VUB/Platemap-studio/actions/workflows/release.yml/badge.svg" alt="Build & Release"></a>
+  <a href="https://github.com/LIVR-VUB/Platemap-studio/releases/latest"><img src="https://img.shields.io/badge/release-v0.1.0-blue?logo=github" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/MIT%20License-FFFFFF" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/pycytominer-compatible-6f42c1" alt="pycytominer compatible">
+  <img src="https://img.shields.io/badge/Cell%20Painting-ready-2ea44f" alt="Cell Painting ready">
+</p>
+
+<p align="center">
+  <a href="#download"><img src="https://custom-icon-badges.demolab.com/badge/Windows-0078D6?logo=windows11&logoColor=white" alt="Windows"></a>
+  <a href="#download"><img src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=F0F0F0" alt="macOS"></a>
+  <a href="#download"><img src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black" alt="Linux"></a>
+  <a href="#download"><img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu"></a>
+  <a href="#download"><img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=fff" alt="Debian"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Electron-2B2E3A?logo=electron&logoColor=fff" alt="Electron">
+  <img src="https://img.shields.io/badge/React-%2320232a.svg?logo=react&logoColor=%2361DAFB" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=fff" alt="Vite">
+  <img src="https://img.shields.io/badge/Immer-00E7C3?logo=immer&logoColor=000" alt="Immer">
+  <img src="https://img.shields.io/badge/Node.js-6DA55F?logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/npm-CB3837?logo=npm&logoColor=fff" alt="npm">
+  <img src="https://img.shields.io/badge/CSS-639?logo=css&logoColor=fff" alt="CSS">
+  <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white" alt="GitHub Actions">
+</p>
+
+<p align="center">
   <img src="docs/screenshots/figure.png" alt="Example 96-well dose-response plate map" width="760">
 </p>
 
