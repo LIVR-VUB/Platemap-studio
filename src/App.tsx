@@ -8,7 +8,7 @@ import {
   duplicatePlate, deletePlate,
 } from './store'
 import { allWells } from './model'
-import { native, saveProject, openProject, importTable, exportCSV } from './io'
+import { native, saveProject, openProject, openProjectText, importTable, exportCSV } from './io'
 
 type Item = [label: string, action: () => void, shortcut?: string] | '-'
 
@@ -73,6 +73,7 @@ function TitleBar() {
   const file = useStore((s) => s.ui.filePath)
   const bar = useRef<HTMLDivElement>(null)
   useEffect(() => { native?.onMaximized(setMax) }, [])
+  const mac = native?.platform === 'darwin'
   useEffect(() => {
     if (!open) return
     const close = (e: PointerEvent) => { if (!bar.current?.contains(e.target as Node)) setOpen(null) }
@@ -80,7 +81,7 @@ function TitleBar() {
     return () => window.removeEventListener('pointerdown', close)
   }, [open])
   return (
-    <div className="titlebar" ref={bar} onDoubleClick={(e) => e.target === e.currentTarget && native?.maximize()}>
+    <div className={'titlebar' + (mac ? ' mac' : '')} ref={bar} onDoubleClick={(e) => e.target === e.currentTarget && native?.maximize()}>
       <div className="logo" title="PlateMap Studio">
         <img src={logo} alt="L'ivr" />
       </div>
@@ -111,7 +112,7 @@ function TitleBar() {
         <button className="tb-btn" title="pycytominer platemap CSV (Ctrl+Shift+E)" onClick={() => setUI({ dialog: 'platemap' })}>Platemap CSV</button>
         <button className="tb-btn primary" onClick={() => setUI({ dialog: 'export' })}>Export</button>
       </div>
-      {native && (
+      {native && !mac && (
         <div className="winctl">
           <button onClick={native.minimize} title="Minimize"><svg width="10" height="10"><path d="M0 5h10" stroke="currentColor" /></svg></button>
           <button onClick={native.maximize} title={max ? 'Restore' : 'Maximize'}>
@@ -159,6 +160,7 @@ function useShortcuts() {
 
 export default function App() {
   useShortcuts()
+  useEffect(() => native?.onFileOpened((f) => { setUI({ dialog: null }); openProjectText(f) }), [])
   const [lw, setLw] = useState(290)
   const [rw, setRw] = useState(330)
   const splitter = (side: 'l' | 'r') => (e: React.PointerEvent) => {

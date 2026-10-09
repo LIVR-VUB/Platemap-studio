@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('native', {
+  platform: process.platform,
+  onFileOpened: (cb) => ipcRenderer.on('file:opened', (_e, f) => cb(f)),
   minimize: () => ipcRenderer.send('win:min'),
   maximize: () => ipcRenderer.send('win:max'),
   close: () => ipcRenderer.send('win:close'),

@@ -3,6 +3,19 @@ const path = require('path')
 const fs = require('fs/promises')
 
 let win
+const isMac = process.platform === 'darwin'
+// Project file passed on the command line (Windows/Linux double-click) or via macOS open-file.
+let pendingFile = process.argv.slice(1).find((a) => a.endsWith('.platemap'))
+
+async function sendFile(file) {
+  try { win.webContents.send('file:opened', { path: file, text: await fs.readFile(file, 'utf8') }) } catch { /* unreadable: ignore */ }
+}
+
+app.on('open-file', (e, file) => {
+  e.preventDefault()
+  if (win && !win.webContents.isLoading()) sendFile(file)
+  else pendingFile = file
+})
 
 function createWindow() {
   win = new BrowserWindow({
@@ -10,7 +23,8 @@ function createWindow() {
     height: 980,
     minWidth: 1100,
     minHeight: 700,
-    frame: false,
+    // macOS keeps its native traffic-light buttons; elsewhere the app draws its own.
+    ...(isMac ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 12, y: 11 } } : { frame: false }),
     backgroundColor: '#1b1c1f',
     title: 'PlateMap Studio',
     icon: path.join(__dirname, 'icon.png'),
@@ -18,6 +32,7 @@ function createWindow() {
   })
   if (process.env.VITE_DEV) win.loadURL('http://localhost:5173')
   else win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+  win.webContents.on('did-finish-load', () => { if (pendingFile) { sendFile(pendingFile); pendingFile = null } })
   win.on('maximize', () => win.webContents.send('win:maximized', true))
   win.on('unmaximize', () => win.webContents.send('win:maximized', false))
 }

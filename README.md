@@ -64,7 +64,31 @@ Plate maps usually live in spreadsheets or one-off scripts. Fixing one mistake m
 | **pycytominer platemap export** | **Figure export (PDF / SVG / PNG)** |
 | ![Platemap export](docs/screenshots/platemap-export.png) | ![Figure export](docs/screenshots/figure-export.png) |
 
-## Install and run
+## Download
+
+Ready-to-run installers are on the **[Releases page](https://github.com/LIVR-VUB/Platemap-studio/releases/latest)**:
+
+| OS | File | Notes |
+|---|---|---|
+| **Windows** 10/11 | `…-windows-setup.exe` (installer) or `…-windows-portable.exe` (no install) | The app is not code-signed, so SmartScreen may warn: click *More info → Run anyway*. |
+| **macOS** (Apple Silicon M1–M4) | `…-mac-arm64.dmg` | Not notarized. Open the DMG and drag the app to Applications. The first time, **right-click the app → Open → Open**. If macOS says it is "damaged", run `xattr -cr "/Applications/PlateMap Studio.app"` |
+| **macOS** (Intel) | `…-mac-x64.dmg` | Same as above |
+| **Ubuntu / Debian** | `…-linux-amd64.deb` | `sudo apt install ./PlateMap-Studio-*-linux-amd64.deb`, then launch it from the app menu |
+| **Any Linux** | `…-linux-x86_64.AppImage` | `chmod +x PlateMap-Studio-*.AppImage && ./PlateMap-Studio-*.AppImage`. On Ubuntu 24.04+, use the `.deb` or add `--no-sandbox`. Needs `libfuse2` (`sudo apt install libfuse2`) |
+
+Double-clicking a `.platemap` project file opens it in the app once it is installed.
+
+### Making a new release
+
+Bump `version` in `package.json`, then tag and push:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+GitHub Actions ([`.github/workflows/release.yml`](.github/workflows/release.yml)) builds on Linux, Windows and macOS and publishes the installers on a new release. Build locally with `npm run dist:linux`, `npm run dist:win` or `npm run dist:mac`. Each OS can only build its own installers reliably; macOS installers can only be built on a Mac.
+
+## Build from source
 
 You need [Node.js](https://nodejs.org/) 20 or newer.
 
@@ -82,7 +106,7 @@ Other scripts:
 | `npm run dev` | Development mode with hot reload (Vite + Electron) |
 | `npm run web` | Browser-only mode at http://localhost:5173 (no PDF export or folder writing) |
 | `npm run build` | Type-check and build into `dist/` |
-| `npm run dist` | Package a Linux AppImage with electron-builder |
+| `npm run dist` | Package installers for the current OS into `release/` |
 
 ## Quick start
 
@@ -155,7 +179,7 @@ src/
 - Echo / liquid-handler picklists (needs source-plate volumes)
 - Native Excel (.xlsx) export
 - Library of reusable plate templates
-- Windows and macOS installers
+- Code-signed Windows and notarized macOS builds
 
 ## Contributing
 

@@ -10,6 +10,8 @@ import { getState, loadDoc, setUI, commit, coerce, curPlate, learnAllDerived, re
 import { platemapSettings, platemapRows, plateMapName, toDelimited, barcodeRows, cellText, matchHeaders, applyTemplate } from './platemap'
 
 interface Native {
+  platform: string
+  onFileOpened(cb: (f: { path: string; text: string }) => void): void
   minimize(): void; maximize(): void; close(): void
   onMaximized(cb: (v: boolean) => void): void
   saveFile(o: { defaultPath: string; filters: { name: string; extensions: string[] }[]; data: string | { base64: string } }): Promise<string | null>
@@ -65,7 +67,10 @@ export async function saveProject(as = false) {
 
 export async function openProject() {
   const f = await open(['platemap', 'json'])
-  if (!f) return
+  if (f) openProjectText(f)
+}
+
+export function openProjectText(f: { path: string; text: string }) {
   try {
     const doc = JSON.parse(f.text) as Doc
     if (!doc.plates?.length || !doc.fields || !doc.layers) throw new Error('Not a PlateMap project file.')

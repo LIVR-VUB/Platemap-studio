@@ -10,18 +10,94 @@
     "web": "vite",
     "build": "tsc --noEmit && vite build",
     "start": "npm run build && electron .",
-    "dist": "npm run build && electron-builder --linux AppImage"
+    "dist": "npm run build && electron-builder",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "build": {
-    "appId": "org.platemap.studio",
+    "appId": "be.vub.livr.platemapstudio",
+    "productName": "PlateMap Studio",
+    "artifactName": "PlateMap-Studio-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
     "files": [
       "dist/**",
       "electron/**"
     ],
+    "fileAssociations": [
+      {
+        "ext": "platemap",
+        "name": "PlateMap project",
+        "role": "Editor"
+      }
+    ],
     "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Science",
-      "icon": "electron/icon.png"
-    }
+      "icon": "build/icon.png",
+      "maintainer": "LIVR-VUB <arkajyoti.sarkar@vub.be>",
+      "synopsis": "Plate map designer for screening and Cell Painting",
+      "syncDesktopName": true
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "artifactName": "PlateMap-Studio-${version}-windows-setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "PlateMap-Studio-${version}-windows-portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.education",
+      "icon": "build/icon.png",
+      "identity": null,
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "artifactName": "PlateMap-Studio-${version}-mac-${arch}.${ext}"
+    },
+    "publish": null
   },
   "dependencies": {
     "immer": "^11.1.21",
@@ -45,5 +121,7 @@
     "url": "https://github.com/LIVR-VUB/Platemap-studio.git"
   },
   "author": "Arkajyoti Sarkar <arkajyoti.sarkar@vub.be>",
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://github.com/LIVR-VUB/Platemap-studio",
+  "desktopName": "platemap-studio.desktop"
 }
