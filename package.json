@@ -1,7 +1,7 @@
 {
   "name": "platemap-studio",
   "productName": "PlateMap Studio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Professional plate map designer for screening and Cell Painting",
   "main": "electron/main.cjs",
   "type": "module",

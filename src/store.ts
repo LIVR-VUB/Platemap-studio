@@ -16,7 +16,7 @@ export interface UI {
   plateId: string
   selection: Set<string>
   tool: Tool
-  brush: { fieldId: string; value: Value } | null
+  brush: { fieldId: string; value: Value; unit?: string } | null
   zoom: number
   dialog: DialogName
   dialogArg?: string
@@ -153,12 +153,44 @@ export function setValues(wells: string[], fieldId: string, v: Value | undefined
     const old = oldValues(p, wells, fieldId)
     if (v !== undefined) ensureColor(d, field(d, fieldId), v)
     wells.forEach((w) => setWell(p, w, fieldId, v))
-    if (f.type === 'number' && v !== undefined && unit !== undefined) {
-      const own = unit && normUnit(unit) !== normUnit(f.unit) ? unit : null
-      wells.forEach((w) => { if (own) p.wells[w][unitKey(fieldId)] = own; else delete p.wells[w][unitKey(fieldId)] })
-    }
+    if (f.type === 'number' && v !== undefined && unit !== undefined) wells.forEach((w) => putUnit(p.wells[w], f, unit))
     learnDerived(d, p, wells, fieldId)
     applyDerived(d, p, wells, fieldId, old)
+  })
+}
+
+/** Store a per-well unit only when it differs from the field's default unit. */
+function putUnit(w: Draft<Plate>['wells'][string] | undefined, f: Pick<Field, 'id' | 'unit'>, unit: string | null) {
+  if (!w || w[f.id] === undefined) return
+  if (unit && normUnit(unit) !== normUnit(f.unit)) w[unitKey(f.id)] = unit
+  else delete w[unitKey(f.id)]
+}
+
+/** Change the unit of wells that already have a value (value itself unchanged). */
+export function setUnit(wells: string[], fieldId: string, unit: string) {
+  const f = state.doc.fields.find((x) => x.id === fieldId)!
+  const p0 = curPlate()
+  const has = wells.filter((w) => p0.wells[w]?.[fieldId] !== undefined)
+  if (!has.length) return
+  commit(`Set ${f.name} unit → ${unit} (${has.length} wells)`, (d) => {
+    const p = draftPlate(d)
+    has.forEach((w) => putUnit(p.wells[w], f, unit))
+  })
+}
+
+/** Rename one numeric value+unit everywhere (e.g. "10 µM" -> "10 nM" or "5 µM"). */
+export function renameNumber(fieldId: string, v: number, unit: string | undefined, text: string) {
+  const f = state.doc.fields.find((x) => x.id === fieldId)!
+  const pu = parseNumUnit(text)
+  if (!pu) return
+  const to = pu.unit ?? unit ?? null
+  if (pu.n === v && normUnit(to ?? '') === normUnit(unit)) return
+  commit(`Change ${f.name} ${v} ${unit ?? ''} → ${pu.n} ${to ?? ''}`, (d) => {
+    for (const p of d.plates) for (const w of Object.values(p.wells)) {
+      if (w[fieldId] !== v || normUnit((w[unitKey(fieldId)] as string | undefined) ?? f.unit) !== normUnit(unit)) continue
+      w[fieldId] = pu.n
+      putUnit(w, f, to)
+    }
   })
 }
 
@@ -262,7 +294,6 @@ export function select(wells: Iterable<string>, mode: 'replace' | 'add' | 'toggl
 }
 export const selectWhere = (pred: (id: string) => boolean, mode: 'replace' | 'add' = 'replace') =>
   select(allWells(curPlate()).filter(pred), mode)
-export const selectByValue = (fieldId: string, v: Value) => selectWhere((w) => curPlate().wells[w]?.[fieldId] === v)
 
 // ---------- plates ----------
 export function addPlate(format: string, name: string, rowsCols?: [number, number]) {
@@ -333,6 +364,16 @@ export function updateField(id: string, patch: Partial<Pick<Field, 'name' | 'uni
   commit(`Edit field "${patch.name ?? state.doc.fields.find((f) => f.id === id)?.name}"`, (d) => {
     const f = field(d, id)
     const typeChanged = patch.type && patch.type !== f.type
+    // Changing the default unit must not change what existing numbers mean:
+    // wells that relied on the old default get it as their own unit.
+    if (f.type === 'number' && 'unit' in patch && normUnit(patch.unit) !== normUnit(f.unit)) {
+      const old = f.unit
+      for (const p of d.plates) for (const w of Object.values(p.wells)) {
+        if (w[id] === undefined) continue
+        const u = (w[unitKey(id)] as string | undefined) ?? old
+        putUnit(w, { id, unit: patch.unit }, u ?? null)
+      }
+    }
     Object.assign(f, patch)
     if (!f.derive) delete f.derive
     if (typeChanged) for (const p of d.plates) for (const w of Object.values(p.wells)) {

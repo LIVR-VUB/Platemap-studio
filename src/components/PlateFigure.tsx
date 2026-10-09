@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 import {
   type Doc, type Plate, type Value, type LayerKind,
-  rowLabel, wellId, mix, rampColor, textOn, fmt, numericRange, normalize,
+  rowLabel, wellId, mix, rampColor, textOn, fmt, numericRange, normalize, unitKey, normUnit, wellUnit,
 } from '../model'
 import { usedValues } from '../store'
 
@@ -81,7 +81,8 @@ export function wellLook(doc: Doc, R: ReturnType<typeof makeResolver>, data?: Re
     ring: R.color('ring', R.val(data, 'ring')),
     dot: R.color('dot', R.val(data, 'dot')),
     bar: typeof bv === 'number' && L.bar.fieldId ? Math.max(0.04, normalize(bv, R.range(L.bar.fieldId, L.bar.scale), L.bar.scale)) : undefined,
-    label: lv === undefined ? undefined : fmt(lv),
+    // A per-well unit (differs from the field default) is shown with the number: "10ng/ml".
+    label: lv === undefined ? undefined : fmt(lv) + (typeof lv === 'number' && L.label.fieldId && data?.[unitKey(L.label.fieldId)] ? String(data[unitKey(L.label.fieldId)]).replace(/\s+/g, '') : ''),
     hatch: hv !== undefined && hv !== false && hv !== '',
   }
 }
@@ -105,7 +106,11 @@ function legendSections(doc: Doc, plate: Plate): LegendSection[] {
     if (!f) continue
     const vals = usedValues(doc, f.id, plate)
     if (!vals.length) continue
-    const unit = f.unit ? ` (${f.unit})` : ''
+    // Units actually used on this plate (per-well units can differ from the field default).
+    const byNorm = new Map<string, string>()
+    for (const w of Object.values(plate.wells)) if (typeof w[f.id] === 'number') { const u = wellUnit(w, f) ?? ''; byNorm.set(normUnit(u), u) }
+    const units = [...byNorm.values()]
+    const unit = units.length > 1 ? ' (mixed units)' : units[0] ? ` (${units[0]})` : ''
     const key = k + f.id
     if (seen.has(key)) continue
     seen.add(key)

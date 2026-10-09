@@ -6,6 +6,7 @@ import {
 } from '../store'
 import { type FieldType, type Role, type PlatemapColumn, FORMATS, ROLES, SPECIAL_COLS, parseWell } from '../model'
 import { exportFigure, figureSVG, openProject, exportPlatemap, pickHeaderRow } from '../io'
+import { UnitSelect } from './Panels'
 import { platemapSettings, platemapRows } from '../platemap'
 
 function Modal({ title, children, onOk, okLabel = 'Apply', wide, okDisabled }: { title: string; children: ReactNode; onOk?: () => void | boolean; okLabel?: string; wide?: boolean; okDisabled?: boolean }) {
@@ -158,11 +159,6 @@ function PlateSettings() {
   )
 }
 
-const UNITS: Record<string, string[]> = {
-  dose: ['nM', 'µM', 'mM', 'M', 'ng/mL', 'µg/mL', 'mg/mL', '%', 'x'],
-  density: ['cells/well', 'cells/mL', 'cells/cm²'],
-  time: ['min', 'h', 'd'],
-}
 
 function FieldDialog() {
   const id = useStore((s) => s.ui.dialogArg)
@@ -193,9 +189,11 @@ function FieldDialog() {
         </div>
       </Row>
       {type === 'number' && (
-        <Row label="Unit">
-          <input value={unit} list="units" onChange={(e) => setUnit(e.target.value)} placeholder="µM, cells/well, h…" />
-          <datalist id="units">{Object.values(UNITS).flat().map((u) => <option key={u} value={u} />)}</datalist>
+        <Row label="Default unit" hint={f ? 'Used when a well has no unit of its own. Existing values keep their meaning (wells that used the old default keep it).' : 'Default for new values; each well can still pick its own unit.'}>
+          <div className="inline">
+            <UnitSelect value={unit} role={role} empty="— none —" onChange={setUnit} />
+            <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="or type any unit" style={{ width: 140 }} />
+          </div>
         </Row>
       )}
       <Row label="Role" hint="Roles drive validation checks and tools (e.g. control role → control distributor).">
@@ -253,14 +251,16 @@ function Dilution() {
   const sel = [...getState().ui.selection]
   const groups = new Set(sel.map((w) => (direction === 'row' ? w.replace(/\d+$/, '') : w.replace(/^[A-Z]+/, '')))).size
   const points = groups ? Math.round(sel.length / groups) : 0
-  const unit = fields.find((f) => f.id === fieldId)?.unit ?? ''
+  const fieldUnit = fields.find((f) => f.id === fieldId)?.unit ?? ''
+  const [unitPick, setUnitPick] = useState<string | null>(null)
+  const unit = unitPick ?? fieldUnit
   const series = Array.from({ length: Math.min(points, 24) }, (_, i) => (zeroLast && i === points - 1 ? 0 : Number((start / factor ** i).toPrecision(3))))
   if (!descending) series.reverse()
   return (
-    <Modal title="Serial dilution" okDisabled={!nSel || !fieldId} onOk={() => serialDilution({ fieldId, start, factor, direction, descending, zeroLast, treatment: tf && tv ? { fieldId: tf, value: tv } : undefined })}>
+    <Modal title="Serial dilution" okDisabled={!nSel || !fieldId} onOk={() => serialDilution({ fieldId, start, factor, direction, descending, zeroLast, unit, treatment: tf && tv ? { fieldId: tf, value: tv } : undefined })}>
       {!nSel && <div className="warn-box">Select the wells for the dilution first (e.g. drag A1:B10). Each row (or column) becomes one replicate series.</div>}
       <Row label="Field"><select value={fieldId} onChange={(e) => setFieldId(e.target.value)}>{nums.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}</select></Row>
-      <Row label="Top dose"><div className="inline"><input type="number" value={start} onChange={(e) => setStart(+e.target.value)} /> {unit}</div></Row>
+      <Row label="Top dose"><div className="inline"><input type="number" value={start} onChange={(e) => setStart(+e.target.value)} /><UnitSelect value={unit} role="dose" empty="—" onChange={setUnitPick} /></div></Row>
       <Row label="Dilution factor"><div className="inline">1 : <input type="number" min={1.01} step={0.5} value={factor} onChange={(e) => setFactor(Math.max(1.0001, +e.target.value))} />
         {[2, 3, 10, Math.SQRT2].map((x) => <button key={x} className="chip" onClick={() => setFactor(x)}>{x === Math.SQRT2 ? '√2' : x}</button>)}</div></Row>
       <Row label="Direction">

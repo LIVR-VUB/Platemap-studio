@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from 'react'
 import {
-  useStore, setUI, select, selectWhere, selectByValue, setValues, clearWells, curPlate, usedValues, renameValue,
-  setValueColor, applyPalette, setLayer, setStyle, jumpTo, commit, coalesced, coerce, moveField, type Tool,
+  useStore, setUI, select, selectWhere, setValues, clearWells, curPlate, usedValues, renameValue,
+  setValueColor, applyPalette, setLayer, setStyle, jumpTo, commit, coalesced, coerce, moveField, setUnit, renameNumber, type Tool,
 } from '../store'
 import {
   type Doc, type Field, type Value, type LayerKind, type Plate, LAYER_KINDS, LAYER_INFO, PALETTES, RAMPS,
-  allWells, isEdge, hasData, fmt, parseWell, nextColor, unitKey, parseNumUnit,
+  allWells, isEdge, hasData, fmt, parseWell, nextColor, parseNumUnit, normUnit, wellUnit, unitGroupsFor, UNIT_GROUPS,
 } from '../model'
 import { ColorSwatch } from './ColorPicker'
 
@@ -21,6 +21,23 @@ export function Section({ title, children, right, defaultOpen = true }: { title:
       </div>
       {open && <div className="section-body">{children}</div>}
     </div>
+  )
+}
+
+/** Unit dropdown grouped by kind (molar, mass/volume, …). Unknown units (typed or imported) are kept as an extra option. */
+export function UnitSelect({ value, onChange, role, mixed, empty }: { value: string; onChange: (u: string) => void; role: Field['role']; mixed?: boolean; empty?: string }) {
+  const groups = unitGroupsFor(role)
+  const all = UNIT_GROUPS.flatMap((g) => g.units)
+  const match = all.find((u) => normUnit(u) === normUnit(value)) ?? value
+  const others = UNIT_GROUPS.filter((g) => !groups.includes(g))
+  return (
+    <select className="unit-select" value={mixed ? '\u0000' : match} title="Unit" onChange={(e) => onChange(e.target.value)}>
+      {mixed && <option value={'\u0000'} disabled>mixed</option>}
+      {empty !== undefined && <option value="">{empty}</option>}
+      {match && !all.includes(match) && <option value={match}>{match}</option>}
+      {groups.map((g) => <optgroup key={g.label} label={g.label}>{g.units.map((u) => <option key={u} value={u}>{u}</option>)}</optgroup>)}
+      {others.length > 0 && <optgroup label="Other units">{others.flatMap((g) => g.units).map((u) => <option key={u} value={u}>{u}</option>)}</optgroup>}
+    </select>
   )
 }
 
@@ -91,10 +108,24 @@ function FieldRow({ f }: { f: Field }) {
   const brush = useStore((s) => s.ui.brush)
   const [open, setOpen] = useState(f.type === 'category')
   const [adding, setAdding] = useState('')
+  const [addUnit, setAddUnit] = useState<string | undefined>(f.unit)
   const used = usedValues(doc, f.id)
   const values: Value[] = f.type === 'category' ? [...new Set([...used, ...Object.keys(f.colors)])] : used
   const counts = new Map<Value, number>()
   for (const w of Object.values(plate.wells)) if (w[f.id] !== undefined) counts.set(w[f.id], (counts.get(w[f.id]) ?? 0) + 1)
+  // Numbers are listed per value+unit, so 10 nM and 10 ng/ml stay separate.
+  const numEntries = new Map<string, { v: number; u: string; count: number }>()
+  if (f.type === 'number') {
+    for (const p of doc.plates) for (const w of Object.values(p.wells)) {
+      const v = w[f.id]
+      if (typeof v !== 'number') continue
+      const u = wellUnit(w, f) ?? '', k = v + '|' + normUnit(u)
+      const e = numEntries.get(k) ?? { v, u, count: 0 }
+      if (p === plate) e.count++
+      numEntries.set(k, e)
+    }
+  }
+  const nums = [...numEntries.values()].sort((a, b) => a.u.localeCompare(b.u) || a.v - b.v)
 
   return (
     <div className="field">
@@ -120,15 +151,25 @@ function FieldRow({ f }: { f: Field }) {
               </select>
             </div>
           )}
-          {values.slice(0, 200).map((v) => (
-            <ValueRow key={String(v)} f={f} v={v} count={counts.get(v) ?? 0} brushing={brush?.fieldId === f.id && brush.value === v} />
-          ))}
+          {f.type === 'number'
+            ? nums.slice(0, 200).map((e) => (
+              <ValueRow key={e.v + '|' + e.u} f={f} v={e.v} u={e.u} count={e.count}
+                brushing={brush?.fieldId === f.id && brush.value === e.v && normUnit(brush.unit ?? f.unit) === normUnit(e.u)} />
+            ))
+            : values.slice(0, 200).map((v) => (
+              <ValueRow key={String(v)} f={f} v={v} count={counts.get(v) ?? 0} brushing={brush?.fieldId === f.id && brush.value === v} />
+            ))}
           {!values.length && <div className="hint">No values yet. Select wells and type in the Inspector{f.type === 'category' ? ', or add one below' : ''}.</div>}
           {(f.type === 'category' || f.type === 'number' || f.type === 'text') && (
             <form className="add-value" onSubmit={(e) => {
               e.preventDefault()
               const v = coerce(f, adding)
               if (v === undefined) return
+              if (f.type === 'number') {
+                setUI({ tool: 'brush', brush: { fieldId: f.id, value: v, unit: parseNumUnit(adding)?.unit ?? addUnit ?? f.unit } })
+                setAdding('')
+                return
+              }
               if (f.type === 'category') commit(`Add ${f.name} "${v}"`, (d) => {
                 const df = d.fields.find((x) => x.id === f.id)!
                 if (!df.colors[v as string]) df.colors[v as string] = nextColor(df as Field, d.fields as Field[])
@@ -136,7 +177,10 @@ function FieldRow({ f }: { f: Field }) {
               setUI({ tool: 'brush', brush: { fieldId: f.id, value: v } })
               setAdding('')
             }}>
-              <input placeholder={f.type === 'number' ? `value${f.unit ? ' (' + f.unit + ')' : ''} → brush` : 'new value → brush'} value={adding} onChange={(e) => setAdding(e.target.value)} />
+              <div className="add-row">
+                <input placeholder={f.type === 'number' ? 'value → brush' : 'new value → brush'} value={adding} onChange={(e) => setAdding(e.target.value)} />
+                {f.type === 'number' && <UnitSelect value={addUnit ?? ''} role={f.role} empty="—" onChange={(u) => setAddUnit(u || undefined)} />}
+              </div>
             </form>
           )}
         </div>
@@ -145,9 +189,14 @@ function FieldRow({ f }: { f: Field }) {
   )
 }
 
-function ValueRow({ f, v, count, brushing }: { f: Field; v: Value; count: number; brushing: boolean }) {
+function ValueRow({ f, v, u, count, brushing }: { f: Field; v: Value; u?: string; count: number; brushing: boolean }) {
   const [edit, setEdit] = useState(false)
   const [text, setText] = useState(String(v))
+  const isNum = f.type === 'number'
+  const matches = (w: string) => {
+    const d = curPlate().wells[w]
+    return d?.[f.id] === v && (!isNum || normUnit(wellUnit(d, f)) === normUnit(u))
+  }
   return (
     <div className={'value-row' + (brushing ? ' brushing' : '')}>
       {f.type === 'category' && typeof v === 'string'
@@ -157,16 +206,16 @@ function ValueRow({ f, v, count, brushing }: { f: Field; v: Value; count: number
         <input
           autoFocus className="value-edit" value={text}
           onChange={(e) => setText(e.target.value)}
-          onBlur={() => { setEdit(false); renameValue(f.id, v, text) }}
+          onBlur={() => { setEdit(false); if (isNum) renameNumber(f.id, v as number, u || undefined, text); else renameValue(f.id, v, text) }}
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') { setText(String(v)); setEdit(false) } }}
         />
       ) : (
-        <span className="value-name" title="Click: select wells · Double-click: rename everywhere" onClick={(e) => e.shiftKey ? selectWhere((w) => curPlate().wells[w]?.[f.id] === v, 'add') : selectByValue(f.id, v)} onDoubleClick={() => { setText(String(v)); setEdit(true) }}>
-          {fmt(v)}{f.unit && typeof v === 'number' ? <span className="unit"> {f.unit}</span> : null}
+        <span className="value-name" title="Click: select wells · Double-click: edit everywhere (e.g. 10 nM)" onClick={(e) => selectWhere(matches, e.shiftKey ? 'add' : 'replace')} onDoubleClick={() => { setText(isNum && u ? `${v} ${u}` : String(v)); setEdit(true) }}>
+          {fmt(v)}{isNum && u ? <span className="unit"> {u}</span> : null}
         </span>
       )}
       <span className="count">{count || ''}</span>
-      <button className={'icon-btn' + (brushing ? ' on' : '')} title="Paint with this value" onClick={() => setUI({ tool: 'brush', brush: { fieldId: f.id, value: v } })}>🖌</button>
+      <button className={'icon-btn' + (brushing ? ' on' : '')} title="Paint with this value" onClick={() => setUI({ tool: 'brush', brush: { fieldId: f.id, value: v, unit: isNum ? u || undefined : undefined } })}>🖌</button>
     </div>
   )
 }
@@ -227,27 +276,28 @@ function Inspector() {
 }
 
 function FieldInput({ f, wells, plate, doc }: { f: Field; wells: string[]; plate: Plate; doc: Doc }) {
-  // Numbers show their per-well unit when it differs from the field unit ("10 ng/ml").
-  const shown = (w: string) => {
-    const v = plate.wells[w]?.[f.id], u = plate.wells[w]?.[unitKey(f.id)]
-    return v === undefined ? undefined : u ? `${v} ${u}` : v
-  }
-  const vals = new Set(wells.map(shown))
+  const isNum = f.type === 'number'
+  const vals = new Set(wells.map((w) => plate.wells[w]?.[f.id]))
   const uniform = vals.size === 1 ? [...vals][0] : undefined
   const mixed = vals.size > 1
   const init = uniform === undefined ? '' : String(uniform)
   const [text, setText] = useState(init)
+  // Unit dropdown: the unit shared by the selected wells that have a value (field default when none has one).
+  const units = new Set(wells.filter((w) => plate.wells[w]?.[f.id] !== undefined).map((w) => normUnit(wellUnit(plate.wells[w], f))))
+  const firstUnit = wells.map((w) => plate.wells[w]).find((d) => d?.[f.id] !== undefined)
+  const [unit, setUnitState] = useState(units.size === 1 ? wellUnit(firstUnit, f) ?? '' : f.unit ?? '')
   const commitText = () => {
     if (text === init) return
-    if (f.type !== 'number') return setValues(wells, f.id, coerce(f, text))
+    if (!isNum) return setValues(wells, f.id, coerce(f, text))
     const pu = parseNumUnit(text)
     if (text.trim() && !pu) { setText(init); return }
-    setValues(wells, f.id, pu?.n, undefined, pu?.unit ?? null)
+    // A unit typed in the box ("10 nM") wins over the dropdown.
+    setValues(wells, f.id, pu?.n, undefined, pu?.unit ?? (unit || null))
   }
   const listId = 'dl-' + f.id
   return (
     <div className="insp-row">
-      <label title={f.role}>{f.name}{f.unit && <span className="unit"> ({f.unit})</span>}</label>
+      <label title={f.name}>{f.name}{!isNum && f.unit && <span className="unit"> ({f.unit})</span>}</label>
       <div className="insp-input">
         {f.type === 'category' && typeof uniform === 'string' && f.colors[uniform] !== undefined && (
           <ColorSwatch color={f.colors[uniform] ?? '#888'} onChange={(c) => setValueColor(f.id, uniform, c)} size={20} />
@@ -269,6 +319,9 @@ function FieldInput({ f, wells, plate, doc }: { f: Field; wells: string[]; plate
               onBlur={commitText}
               onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setText(init) }}
             />
+            {isNum && (
+              <UnitSelect value={unit} role={f.role} mixed={units.size > 1} empty="—" onChange={(u) => { setUnitState(u); setUnit(wells, f.id, u) }} />
+            )}
             {f.type === 'category' && (
               <datalist id={listId}>{[...new Set([...usedValues(doc, f.id), ...Object.keys(f.colors)])].map((v) => <option key={String(v)} value={String(v)} />)}</datalist>
             )}

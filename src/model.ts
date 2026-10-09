@@ -124,6 +124,25 @@ export const isEdge = (p: Plate, id: string, depth = 1) => {
 export const unitKey = (fieldId: string) => fieldId + '@unit'
 export const normUnit = (u?: string) => (u ?? '').trim().replace(/[µμ]/g, 'u').toLowerCase()
 export const wellUnit = (w: WellData | undefined, f: Field) => (w?.[unitKey(f.id)] as string | undefined) ?? f.unit
+/** Unit choices offered in dropdowns. Anything else can still be typed (e.g. "10 mg/kg"). */
+export const UNIT_GROUPS: { label: string; units: string[] }[] = [
+  { label: 'Molar', units: ['fM', 'pM', 'nM', 'µM', 'mM', 'M'] },
+  { label: 'Mass / volume', units: ['pg/ml', 'ng/ml', 'µg/ml', 'mg/ml', 'g/l'] },
+  { label: 'Percent & parts', units: ['%', '% v/v', '% w/v', 'ppm', 'ppb'] },
+  { label: 'Activity & other', units: ['U/ml', 'IU/ml', 'x', 'MOI'] },
+  { label: 'Cells', units: ['cells/well', 'cells/ml', 'cells/cm²'] },
+  { label: 'Time', units: ['s', 'min', 'h', 'd'] },
+  { label: 'Volume', units: ['nl', 'µl', 'ml'] },
+]
+const ROLE_UNIT_GROUPS: Partial<Record<Role, string[]>> = {
+  dose: ['Molar', 'Mass / volume', 'Percent & parts', 'Activity & other'],
+  density: ['Cells'],
+  time: ['Time'],
+}
+/** Groups relevant to a field role (all groups for other roles). */
+export const unitGroupsFor = (role: Role) =>
+  ROLE_UNIT_GROUPS[role] ? UNIT_GROUPS.filter((g) => ROLE_UNIT_GROUPS[role]!.includes(g.label)) : UNIT_GROUPS
+
 /** "10ng/ml" -> {n: 10, unit: "ng/ml"}; "0.5 µM" -> {n: 0.5, unit: "µM"}; "abc" -> null */
 export function parseNumUnit(s: string): { n: number; unit?: string } | null {
   const m = /^\s*([-+]?(?:\d+(?:[.,]\d*)?|[.,]\d+)(?:e[-+]?\d+)?)\s*(\D.*?)?\s*$/i.exec(s)

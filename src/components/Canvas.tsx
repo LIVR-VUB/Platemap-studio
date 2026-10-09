@@ -95,7 +95,7 @@ export function Canvas() {
         painted.current = null
         const { ui: u } = getState()
         if (u.tool === 'erase') clearWells(wells)
-        else if (u.brush) setValues(wells, u.brush.fieldId, u.brush.value)
+        else if (u.brush) setValues(wells, u.brush.fieldId, u.brush.value, undefined, u.brush.unit ?? null)
         force((x) => x + 1)
         window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up)
       }
@@ -203,7 +203,7 @@ function StatusBar({ onFit }: { onFit: () => void }) {
       <span className="sb-well">{hover ?? '—'}</span>
       <span className="sb-info">{info || (hover ? 'empty' : '')}</span>
       <span className="sb-sp" />
-      {tool === 'brush' && <span className="sb-pill">Brush: {brush ? `${fields.find((f) => f.id === brush.fieldId)?.name} = ${String(brush.value)}` : 'pick a value in Fields panel'}</span>}
+      {tool === 'brush' && <span className="sb-pill">Brush: {brush ? `${fields.find((f) => f.id === brush.fieldId)?.name} = ${String(brush.value)}${brush.unit ? ' ' + brush.unit : ''}` : 'pick a value in Fields panel'}</span>}
       <span>{nSel} selected</span>
       <span>{filled}/{plate.rows * plate.cols} filled · {plate.rows}×{plate.cols} ({rowLabel(0)}–{rowLabel(plate.rows - 1)})</span>
       <button className="icon-btn" onClick={() => setUI({ zoom: Math.max(0.2, zoom / 1.2) })}>−</button>

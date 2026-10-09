@@ -61,7 +61,13 @@ Plate maps usually live in spreadsheets or one-off scripts. Fixing one mistake m
 **Metadata**
 - Built-in fields: cell line, compound/treatment, concentration, vehicle, compound class, treatment group, seeding density, timepoint, control type, replicate and notes.
 - **Custom fields** of type category (with colors), number (with unit), text or yes/no.
-- **Per-well units**: type `10ng/ml` or `1uM` straight into a concentration cell. One plate can mix units.
+- **Units for every number**: pick the unit from a dropdown next to each value, or type it (`10 nM`, `5ng/ml`). One plate can mix units.
+  - Molar: fM, pM, nM, µM, mM, M
+  - Mass/volume: pg/ml, ng/ml, µg/ml, mg/ml, g/l
+  - Percent and parts: %, % v/v, % w/v, ppm, ppb
+  - Activity and other: U/ml, IU/ml, x (fold), MOI
+  - Also cell density, time and volume units, plus any custom unit you type
+  - Changing a field's default unit never changes the meaning of values already entered
 - **Auto-fill fields**: vehicle, compound class and treatment group follow the treatment. Set them once for a compound and every other well with that compound gets the same values. The mappings can be edited in the field settings.
 
 **Visual design**
@@ -152,7 +158,7 @@ Other scripts:
 
 1. **Pick a format** on the start screen (for example 96-well) and name the experiment.
 2. **Select wells**: drag over B2–G2, or click a row letter or column number.
-3. **Type values** in the Inspector on the right: cell line, compound, concentration (`10ng/ml`, `1uM`, …). Press Enter to apply.
+3. **Type values** in the Inspector on the right: cell line, compound, and a concentration with its unit picked from the dropdown (nM, µM, ng/ml, …). Press Enter to apply.
 4. For a dose series, select the wells and run **Serial dilution**.
 5. Set the vehicle, compound class and treatment group **once per compound**. Later wells with that compound fill in automatically.
 6. Check the **Checks** tab for missing controls or unknown vehicles.
