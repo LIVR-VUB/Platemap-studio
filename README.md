@@ -161,6 +161,10 @@ src/
 
 Issues and pull requests are welcome. Before opening a PR, run `npm run build`; it must pass the type-check.
 
+## License
+
+[MIT](LICENSE) © 2026 LIVR-VUB (Vrije Universiteit Brussel)
+
 ---
 
 <p align="center">Developed at LIVR · Vrije Universiteit Brussel</p>
