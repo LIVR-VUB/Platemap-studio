@@ -100,12 +100,23 @@ Ready-to-run installers are on the **[Releases page](https://github.com/LIVR-VUB
 | OS | File | Notes |
 |---|---|---|
 | **Windows** 10/11 | `…-windows-setup.exe` (installer) or `…-windows-portable.exe` (no install) | The app is not code-signed, so SmartScreen may warn: click *More info → Run anyway*. |
-| **macOS** (Apple Silicon M1–M4) | `…-mac-arm64.dmg` | Not notarized. Open the DMG and drag the app to Applications. The first time, **right-click the app → Open → Open**. If macOS says it is "damaged", run `xattr -cr "/Applications/PlateMap Studio.app"` |
+| **macOS** (Apple Silicon M1–M4) | `…-mac-arm64.dmg` | Not notarized by Apple, see [first launch on macOS](#first-launch-on-macos) |
 | **macOS** (Intel) | `…-mac-x64.dmg` | Same as above |
 | **Ubuntu / Debian** | `…-linux-amd64.deb` | `sudo apt install ./PlateMap-Studio-*-linux-amd64.deb`, then launch it from the app menu |
 | **Any Linux** | `…-linux-x86_64.AppImage` | `chmod +x PlateMap-Studio-*.AppImage && ./PlateMap-Studio-*.AppImage`. On Ubuntu 24.04+, use the `.deb` or add `--no-sandbox`. Needs `libfuse2` (`sudo apt install libfuse2`) |
 
 Double-clicking a `.platemap` project file opens it in the app once it is installed.
+
+### First launch on macOS
+
+The app is self-signed but not notarized by Apple (that needs a paid Apple Developer account), so macOS blocks it the first time:
+
+1. Open the `.dmg` and drag **PlateMap Studio** into **Applications**.
+2. Double-click the app. When macOS refuses, open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**. On older macOS you can instead right-click the app → **Open → Open**.
+3. If macOS says the app **"is damaged and can't be opened"**, it was blocked by the quarantine flag, not actually damaged. Run this in Terminal, then open the app again:
+   ```bash
+   xattr -cr "/Applications/PlateMap Studio.app"
+   ```
 
 ### Making a new release
 
