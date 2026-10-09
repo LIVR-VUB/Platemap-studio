@@ -11,7 +11,8 @@
 
 <p align="center">
   <a href="https://github.com/LIVR-VUB/Platemap-studio/actions/workflows/release.yml"><img src="https://github.com/LIVR-VUB/Platemap-studio/actions/workflows/release.yml/badge.svg" alt="Build & Release"></a>
-  <a href="https://github.com/LIVR-VUB/Platemap-studio/releases/latest"><img src="https://img.shields.io/badge/release-v0.1.0-blue?logo=github" alt="Release"></a>
+  <a href="https://github.com/LIVR-VUB/Platemap-studio/releases/latest"><img src="https://img.shields.io/github/v/release/LIVR-VUB/Platemap-studio?logo=github" alt="Latest release"></a>
+  <a href="https://github.com/LIVR-VUB/Platemap-studio/releases"><img src="https://img.shields.io/github/downloads/LIVR-VUB/Platemap-studio/total?logo=github" alt="Downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/MIT%20License-FFFFFF" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/pycytominer-compatible-6f42c1" alt="pycytominer compatible">
   <img src="https://img.shields.io/badge/Cell%20Painting-ready-2ea44f" alt="Cell Painting ready">
