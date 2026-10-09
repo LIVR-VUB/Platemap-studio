@@ -1,0 +1,48 @@
+{
+  "name": "platemap-studio",
+  "productName": "PlateMap Studio",
+  "version": "0.1.0",
+  "description": "Professional plate map designer for screening and Cell Painting",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env VITE_DEV=1 electron .\"",
+    "web": "vite",
+    "build": "tsc --noEmit && vite build",
+    "start": "npm run build && electron .",
+    "dist": "npm run build && electron-builder --linux AppImage"
+  },
+  "build": {
+    "appId": "org.platemap.studio",
+    "files": [
+      "dist/**",
+      "electron/**"
+    ],
+    "linux": {
+      "category": "Science",
+      "icon": "electron/icon.png"
+    }
+  },
+  "dependencies": {
+    "immer": "^11.1.21",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "cross-env": "^10.1.0",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "wait-on": "^9.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LIVR-VUB/Platemap-studio.git"
+  },
+  "author": "Arkajyoti Sarkar <arkajyoti.sarkar@vub.be>"
+}
