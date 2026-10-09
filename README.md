@@ -13,6 +13,7 @@
   <a href="https://github.com/LIVR-VUB/Platemap-studio/actions/workflows/release.yml"><img src="https://github.com/LIVR-VUB/Platemap-studio/actions/workflows/release.yml/badge.svg" alt="Build & Release"></a>
   <a href="https://github.com/LIVR-VUB/Platemap-studio/releases/latest"><img src="https://img.shields.io/github/v/release/LIVR-VUB/Platemap-studio?logo=github" alt="Latest release"></a>
   <a href="https://github.com/LIVR-VUB/Platemap-studio/releases"><img src="https://img.shields.io/github/downloads/LIVR-VUB/Platemap-studio/total?logo=github" alt="Downloads"></a>
+  <a href="https://livr-vub.github.io/Platemap-studio/"><img src="https://img.shields.io/badge/docs-user%20manual-1f3fbf?logo=materialformkdocs&logoColor=white" alt="Documentation"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/MIT%20License-FFFFFF" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/pycytominer-compatible-6f42c1" alt="pycytominer compatible">
   <img src="https://img.shields.io/badge/Cell%20Painting-ready-2ea44f" alt="Cell Painting ready">
@@ -36,6 +37,10 @@
   <img src="https://img.shields.io/badge/npm-CB3837?logo=npm&logoColor=fff" alt="npm">
   <img src="https://img.shields.io/badge/CSS-639?logo=css&logoColor=fff" alt="CSS">
   <img src="https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&logoColor=white" alt="GitHub Actions">
+</p>
+
+<p align="center">
+  📖 <b><a href="https://livr-vub.github.io/Platemap-studio/">Read the full user manual →</a></b>
 </p>
 
 <p align="center">
@@ -226,6 +231,15 @@ src/
 - Native Excel (.xlsx) export
 - Library of reusable plate templates
 - Code-signed Windows and notarized macOS builds
+
+## Documentation
+
+The full manual (installation, user guide, advanced tools, worked examples and FAQ) is at **https://livr-vub.github.io/Platemap-studio/**. Its source is in [`docs/`](docs/); preview it locally with:
+
+```bash
+pip install -r requirements-docs.txt
+mkdocs serve
+```
 
 ## Contributing
 
